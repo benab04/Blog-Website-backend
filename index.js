@@ -16,7 +16,7 @@ const app = express();
 const salt = bcrypt.genSaltSync(10);
 const secret = process.env.secret;
 
-app.use(cors({ credentials: true,  origin: "http://localhost:3000" }));
+app.use(cors({ credentials: true, origin: "http://localhost:3000" }));
 app.use(express.json());
 app.use(cookieParser());
 app.use("/uploads", express.static(__dirname + "/uploads"));
@@ -41,17 +41,22 @@ app.post("/register", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { username, password } = req.body;
   const userDoc = await User.findOne({ username });
-  const passOk = bcrypt.compareSync(password, userDoc.password);
-  if (passOk) {
-    jwt.sign({ username, id: userDoc._id }, secret, {}, (err, token) => {
-      if (err) throw err;
-      res.cookie("token", token).json({
-        id: userDoc._id,
-        username,
+  console.log(userDoc);
+  if (userDoc !== null) {
+    const passOk = bcrypt.compareSync(password, userDoc.password);
+    if (passOk) {
+      jwt.sign({ username, id: userDoc._id }, secret, {}, (err, token) => {
+        if (err) throw err;
+        res.cookie("token", token).json({
+          id: userDoc._id,
+          username,
+        });
       });
-    });
+    } else {
+      res.status(400).json("Wrong Credentials");
+    }
   } else {
-    res.status(400).json("Wrong Credentials");
+    res.status(404).json("User not Registered");
   }
 });
 
